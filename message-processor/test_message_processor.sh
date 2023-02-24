@@ -21,12 +21,12 @@ done
 
 echo "Cleanup old binaries and output files"
 echo ""
-rm -f message_processor message_processor_output
+rm -f message-processor message-processor-output
 
-echo "Starting message processor"
+echo "Building & Running message-processor"
 echo ""
 go build
-./message_processor &> message_processor_output.txt &
+./message-processor &> message-processor-output.txt &
 MESSAGE_PROCESSOR_PID=$!
 
 echo "Sending messages to rabbitmq"
@@ -56,4 +56,4 @@ docker-compose down
 
 echo "Printing message processor output"
 echo ""
-cat message_processor_output.txt
+cat message-processor-output.txt
