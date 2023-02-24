@@ -1,5 +1,5 @@
-package main
+package payments
 
-type PaymentsEventVisitor interface {
+type EventsVisitor interface {
     VisitWithdrawalCreated(withdrawalCreated WithdrawalCreated) error
 }

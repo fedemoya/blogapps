@@ -1,17 +1,19 @@
-package main
+package messages
 
 import (
     "encoding/json"
     "errors"
     "github.com/stretchr/testify/mock"
     "github.com/stretchr/testify/require"
+    "message-processor/internal/events"
+    "message-processor/internal/payments"
     "sync"
     "testing"
 )
 
 func TestMessageProcessor(t *testing.T) {
 
-    withdrawalCreated := WithdrawalCreated{
+    withdrawalCreated := payments.WithdrawalCreated{
         WithdrawalId:       "some-unique-id",
         Amount:             100,
         SourceAccount:      "source account data",
@@ -21,7 +23,7 @@ func TestMessageProcessor(t *testing.T) {
     withdrawalCreatedJSON, err := json.Marshal(withdrawalCreated)
     require.NoError(t, err)
 
-    event := EventEnvelope{
+    event := events.EventEnvelope{
         Type: "withdrawal.created",
         Data: withdrawalCreatedJSON,
     }
@@ -44,13 +46,13 @@ func TestMessageProcessor(t *testing.T) {
             wg.Done()
         })
 
-        paymentsEventDeserializerMock := &MockEventsDeserializer[PaymentsEventVisitor]{}
-        paymentsEventDeserializerMock.On("Deserialize", messageMock).Return(withdrawalCreated, nil)
+        paymentsEventDeserializerMock := &events.MockDeserializer[payments.EventsVisitor]{}
+        paymentsEventDeserializerMock.On("Deserialize", eventJSON).Return(withdrawalCreated, nil)
 
-        paymentsEventVisitorMock := &MockPaymentsEventVisitor{}
+        paymentsEventVisitorMock := &payments.MockEventsVisitor{}
         paymentsEventVisitorMock.On("VisitWithdrawalCreated", withdrawalCreated).Return(nil)
 
-        processor := NewMessageProcessor[PaymentsEventVisitor](
+        processor := NewMessageProcessor[payments.EventsVisitor](
             messageConsumerMock,
             paymentsEventDeserializerMock,
             paymentsEventVisitorMock,
@@ -80,13 +82,13 @@ func TestMessageProcessor(t *testing.T) {
             wg.Done()
         })
 
-        paymentsEventDeserializerMock := &MockEventsDeserializer[PaymentsEventVisitor]{}
-        paymentsEventDeserializerMock.On("Deserialize", messageMock).Return(withdrawalCreated, nil)
+        paymentsEventDeserializerMock := &events.MockDeserializer[payments.EventsVisitor]{}
+        paymentsEventDeserializerMock.On("Deserialize", eventJSON).Return(withdrawalCreated, nil)
 
-        paymentsEventVisitorMock := &MockPaymentsEventVisitor{}
+        paymentsEventVisitorMock := &payments.MockEventsVisitor{}
         paymentsEventVisitorMock.On("VisitWithdrawalCreated", withdrawalCreated).Return(errors.New("boom"))
 
-        processor := NewMessageProcessor[PaymentsEventVisitor](
+        processor := NewMessageProcessor[payments.EventsVisitor](
             messageConsumerMock,
             paymentsEventDeserializerMock,
             paymentsEventVisitorMock,

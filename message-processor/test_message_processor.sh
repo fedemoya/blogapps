@@ -3,11 +3,7 @@
 # Exit When Any Command Fails
 set -e
 
-echo "Initiating message processor test"
-echo ""
-
-echo "Starting rabbitmq"
-echo ""
+# Starting rabbitmq
 docker-compose up -d
 
 rabbitmq_is_ready() {
@@ -19,18 +15,16 @@ until rabbitmq_is_ready; do
   echo "Waiting rabbitmq to start..."
 done
 
-echo "Cleanup old binaries and output files"
-echo ""
-rm -f message-processor message-processor-output
+# Cleanup old binaries and output files
+rm -f bin/message-processor output/message-processor.txt
 
-echo "Building & Running message-processor"
-echo ""
-go build
-./message-processor &> message-processor-output.txt &
+# Build & Running message-processor
+mkdir -p bin output
+go build -o bin/ cmd/message-processor.go
+bin/message-processor &> output/message-processor.txt &
 MESSAGE_PROCESSOR_PID=$!
 
-echo "Sending messages to rabbitmq"
-echo ""
+# Send messages to rabbitmq
 for i in {1..10} ; do
     echo "Publishing withdrawal.created event with amount #$i"
     docker-compose exec rabbitmq rabbitmqadmin publish routing_key="message-consumer-queue" payload="
@@ -46,14 +40,13 @@ for i in {1..10} ; do
     "
 done
 
-echo "Terminating message processor"
-echo ""
+# Terminate message-processor
 kill -n 15 $MESSAGE_PROCESSOR_PID
 
-echo "Shutting down rabbitmq"
-echo ""
+# Shut down rabbitmq"
 docker-compose down
 
-echo "Printing message processor output"
+echo ""
+echo "-- Message processor output --"
 echo ""
 cat message-processor-output.txt

@@ -1,23 +1,24 @@
-package main
+package payments
 
 import (
     "encoding/json"
     "fmt"
     "log"
+    "message-processor/internal/events"
 )
 
-type PaymentsEventDeserializer struct {
+type EventsDeserializer struct {
 }
 
-func NewPaymentsEventDeserializer() *PaymentsEventDeserializer {
-    return &PaymentsEventDeserializer{}
+func NewPaymentsEventDeserializer() *EventsDeserializer {
+    return &EventsDeserializer{}
 }
 
-func (r *PaymentsEventDeserializer) Deserialize(message Message) (Event[PaymentsEventVisitor], error) {
-    var event EventEnvelope
-    err := json.Unmarshal(message.Payload(), &event)
+func (r *EventsDeserializer) Deserialize(rawEvent []byte) (events.Event[EventsVisitor], error) {
+    var event events.EventEnvelope
+    err := json.Unmarshal(rawEvent, &event)
     if err != nil {
-        return nil, fmt.Errorf("error processing message %s: %w", message.Payload(), err)
+        return nil, fmt.Errorf("error processing raw event %s: %w", rawEvent, err)
     }
     switch event.Type {
     case "withdrawal.created":

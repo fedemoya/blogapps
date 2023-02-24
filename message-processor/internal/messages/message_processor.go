@@ -1,19 +1,20 @@
-package main
+package messages
 
 import (
     "fmt"
     "log"
+    "message-processor/internal/events"
 )
 
 type MessageProcessor[EventsVisitor any] struct {
     messageConsumer    MessageConsumer
-    eventsDeserializer EventsDeserializer[EventsVisitor]
+    eventsDeserializer events.Deserializer[EventsVisitor]
     eventsVisitor      EventsVisitor
 }
 
 func NewMessageProcessor[EventsVisitor any](
     messageConsumer MessageConsumer,
-    eventsDeserializer EventsDeserializer[EventsVisitor],
+    eventsDeserializer events.Deserializer[EventsVisitor],
     eventsVisitor EventsVisitor) *MessageProcessor[EventsVisitor] {
     return &MessageProcessor[EventsVisitor]{
         messageConsumer:    messageConsumer,
@@ -51,7 +52,7 @@ func (p *MessageProcessor[EV]) processMsg(msg Message) {
 
     log.Printf("processing message with payload %s", msg.Payload())
 
-    event, err := p.eventsDeserializer.Deserialize(msg)
+    event, err := p.eventsDeserializer.Deserialize(msg.Payload())
     if err != nil {
         log.Printf("failed deserializing msg: %s", err.Error())
         p.nackMsg(msg)
