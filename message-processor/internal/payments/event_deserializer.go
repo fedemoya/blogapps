@@ -7,14 +7,14 @@ import (
     "message-processor/internal/events"
 )
 
-type EventsDeserializer struct {
+type EventDeserializer struct {
 }
 
-func NewPaymentsEventDeserializer() *EventsDeserializer {
-    return &EventsDeserializer{}
+func NewEventDeserializer() *EventDeserializer {
+    return &EventDeserializer{}
 }
 
-func (r *EventsDeserializer) Deserialize(rawEvent []byte) (events.Event[EventsVisitor], error) {
+func (r *EventDeserializer) Deserialize(rawEvent []byte) (events.Event[EventsVisitor], error) {
     var event events.EventEnvelope
     err := json.Unmarshal(rawEvent, &event)
     if err != nil {

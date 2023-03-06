@@ -49,4 +49,4 @@ docker-compose down
 echo ""
 echo "-- Message processor output --"
 echo ""
-cat message-processor-output.txt
+cat message-processor.txt

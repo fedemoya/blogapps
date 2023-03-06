@@ -3,6 +3,7 @@ package main
 import (
     "context"
     "log"
+    "message-processor/internal/dinopay"
     "message-processor/internal/messages"
     "message-processor/internal/payments"
     "os/signal"
@@ -13,21 +14,33 @@ func main() {
 
     mainCtx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-    messageConsumer := messages.NewRabbitMQMessageConsumer()
-    paymentsEventDeserializer := payments.NewPaymentsEventDeserializer()
-    handlersFactory := payments.NewHandlersFactoryImpl()
-    paymentsEventVisitor := payments.NewPaymentsEventVisitorImpl(handlersFactory)
+    rabbitMQMessageConsumer := messages.NewRabbitMQMessageConsumer()
+    paymentsEventDeserializer := payments.NewEventDeserializer()
+    paymentsEventsHandlersFactory := payments.NewHandlersFactoryImpl()
+    paymentsEventsVisitor := payments.NewPaymentsEventVisitorImpl(paymentsEventsHandlersFactory)
 
-    processor := messages.NewMessageProcessor[payments.EventsVisitor](messageConsumer, paymentsEventDeserializer, paymentsEventVisitor)
+    paymentMessagesProcessor := messages.NewMessageProcessor[payments.EventsVisitor](rabbitMQMessageConsumer, paymentsEventDeserializer, paymentsEventsVisitor)
 
-    err := processor.Start()
+    err := paymentMessagesProcessor.Start()
     if err != nil {
-        log.Fatalf("failed to start message processor: %s", err.Error())
+        log.Fatalf("failed to start message paymentMessagesProcessor: %s", err.Error())
     }
 
-    log.Printf("message processor started")
+    log.Printf("message paymentMessagesProcessor started")
+
+    webhookMessageConsumer := messages.NewWebhookMessageConsumer()
+    dinoPayEventDeserializer := dinopay.NewEventDeserializer()
+    dinopayEventsHandlersFactory := dinopay.NewHandlersFactoryImpl()
+    dinopayEventsVisitor := dinopay.NewEventVisitorImpl(dinopayEventsHandlersFactory)
+
+    dinopayMessagesProcessor := messages.NewMessageProcessor[dinopay.EventsVisitor](webhookMessageConsumer, dinoPayEventDeserializer, dinopayEventsVisitor)
+
+    err = dinopayMessagesProcessor.Start()
+    if err != nil {
+        log.Fatalf("failed to start message dinopayMessagesProcessor: %s", err.Error())
+    }
+
+    log.Printf("message dinopayMessagesProcessor started")
 
     <-mainCtx.Done()
-
-    log.Printf("message processor stopped")
 }
